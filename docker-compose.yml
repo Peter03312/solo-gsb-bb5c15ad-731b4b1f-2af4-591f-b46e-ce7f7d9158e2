@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: recycle
+      POSTGRES_PASSWORD: recycle
+      POSTGRES_DB: recycle
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recycle -d recycle"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://recycle:recycle@db:5432/recycle
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8080"
+      SEED_DEMO: "1"
+      MAX_RANGE_DAYS: "366"
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
